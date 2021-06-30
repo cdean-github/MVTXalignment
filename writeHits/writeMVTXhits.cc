@@ -57,6 +57,7 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
   if (findNode)
   {
     dst_trackmap = findNode::getClass<SvtxTrackMap>(topNode, "SvtxTrackMap");
+    if (Verbosity() >= VERBOSITY_A_LOT) std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__ << ": Number of tracks: " << dst_trackmap->size() << std::endl; 
   }
   else
   {
@@ -67,6 +68,7 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
   if (findNode)
   {
     dst_vertexmap = findNode::getClass<SvtxVertexMap>(topNode, "SvtxVertexMap");
+    if (Verbosity() >= VERBOSITY_A_LOT) std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__ << ": Number of vertices: " << dst_vertexmap->size() << std::endl; 
   }
   else
   {
@@ -90,55 +92,34 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
     trutheval = m_svtx_evalstack->get_truth_eval();
   }
 
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+  m_svtx_evalstack->next_event(topNode);
+
   /*
    * Iterate over the tracks
    */
   for (const auto& [key_track, track] : *dst_trackmap)
   {
-
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
     const unsigned int trackNum = key_track;
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
-    const unsigned int vertexId = track->get_vertex_id();
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
 
     /*
      * Find the assoiciated vertex
      */
     float vtxX = 0, vtxY = 0, vtxZ = 0;
 
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
     for (const auto& [key_vertex, vertex] : *dst_vertexmap)
     {
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
       if (vertex->get_id() == track->get_vertex_id())
       {
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
         vtxX = vertex->get_x();
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
         vtxY = vertex->get_y();
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
         vtxZ = vertex->get_z();
       }
     }
 
     int trackType;
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
     PHG4Particle* truth_track = trackeval->max_truth_particle_by_nclusters(track);
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
-    if (truth_track == nullptr)
-{
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
- trackType = -1;
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
-}
-    else
-{
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
-trackType = trutheval->is_primary(truth_track);
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
-}
+    if (truth_track == nullptr) trackType = -1;
+    else trackType = trutheval->is_primary(truth_track);
     /*
      * Now iterate over the clusters to get the hit locations
      */ 
@@ -153,9 +134,6 @@ std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
       unsigned int layerId = 0, staveId = 0, chipId = 0;
       uint16_t row = 0, column = 0;
       float hitX = 0, hitY = 0, hitZ = 0;
-      float vtxX = 0, vtxY = 0, vtxZ = 0;
-
-
       if (trkrId == TrkrDefs::mvtxId)
       {
         layerId = TrkrDefs::getLayer(clusKey);
@@ -202,7 +180,6 @@ std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
         hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxY;
         hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxZ;
         hitsFile << "\n";
-std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
       }
     }
   }
