@@ -35,6 +35,10 @@ int writeMVTXhits::Init(PHCompositeNode *topNode)
            << ", global_x"
            << ", global_y"
            << ", global_z"
+           << ", trackType"
+           << ", vtxX"
+           << ", vtxY"
+           << ", vtxZ"
            << "\n";
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -43,8 +47,10 @@ int writeMVTXhits::Init(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int writeMVTXhits::process_event(PHCompositeNode *topNode)
 {
-  std::cout << "writeMVTXhits::process_event(PHCompositeNode *topNode) Processing Event" << std::endl;
 
+  /*
+   * Check that the nodes we need were produced
+   */   
   PHNodeIterator nodeIter(topNode);
 
   PHNode *findNode = dynamic_cast<PHNode*>(nodeIter.findFirst("SvtxTrackMap"));
@@ -57,6 +63,16 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
     std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< ": SvtxTrackMap does not exist" << std::endl;
   }
   
+  findNode = dynamic_cast<PHNode*>(nodeIter.findFirst("SvtxVertexMap"));
+  if (findNode)
+  {
+    dst_vertexmap = findNode::getClass<SvtxVertexMap>(topNode, "SvtxVertexMap");
+  }
+  else
+  {
+    std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< ": SvtxVertexMap does not exist" << std::endl;
+  }
+
   findNode = dynamic_cast<PHNode*>(nodeIter.findFirst("TRKR_CLUSTER"));
   if (findNode)
   {
@@ -67,8 +83,65 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
     std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< ": TRKR_CLUSTER does not exist" << std::endl;
   }
 
+  if (!m_svtx_evalstack)
+  {
+    m_svtx_evalstack = new SvtxEvalStack(topNode);
+    trackeval = m_svtx_evalstack->get_track_eval();
+    trutheval = m_svtx_evalstack->get_truth_eval();
+  }
+
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+  /*
+   * Iterate over the tracks
+   */
   for (const auto& [key_track, track] : *dst_trackmap)
   {
+
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+    const unsigned int trackNum = key_track;
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+    const unsigned int vertexId = track->get_vertex_id();
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+
+    /*
+     * Find the assoiciated vertex
+     */
+    float vtxX = 0, vtxY = 0, vtxZ = 0;
+
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+    for (const auto& [key_vertex, vertex] : *dst_vertexmap)
+    {
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+      if (vertex->get_id() == track->get_vertex_id())
+      {
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+        vtxX = vertex->get_x();
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+        vtxY = vertex->get_y();
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+        vtxZ = vertex->get_z();
+      }
+    }
+
+    int trackType;
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+    PHG4Particle* truth_track = trackeval->max_truth_particle_by_nclusters(track);
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+    if (truth_track == nullptr)
+{
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+ trackType = -1;
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+}
+    else
+{
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+trackType = trutheval->is_primary(truth_track);
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
+}
+    /*
+     * Now iterate over the clusters to get the hit locations
+     */ 
     for (SvtxTrack::ConstClusterKeyIter iter = track->begin_cluster_keys();
          iter != track->end_cluster_keys();
          ++iter)
@@ -77,11 +150,11 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
       cluster = dst_clustermap->findCluster(clusKey);
       const unsigned int trkrId = TrkrDefs::getTrkrId(clusKey);
 
-      const unsigned int trackNum = key_track;
-
       unsigned int layerId = 0, staveId = 0, chipId = 0;
       uint16_t row = 0, column = 0;
       float hitX = 0, hitY = 0, hitZ = 0;
+      float vtxX = 0, vtxY = 0, vtxZ = 0;
+
 
       if (trkrId == TrkrDefs::mvtxId)
       {
@@ -108,6 +181,10 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
           std::cout << "hitX: " << hitX << std::endl;
           std::cout << "hitY: " << hitY << std::endl;
           std::cout << "hitZ: " << hitZ << std::endl;
+          std::cout << "trackType: " << trackType << std::endl;
+          std::cout << "vtxX: " << vtxX << std::endl;
+          std::cout << "vtxY: " << vtxY << std::endl;
+          std::cout << "vtxZ: " << vtxZ << std::endl;
         }
        
         hitsFile << std::setfill('0') << std::setw(6) << eventNum;
@@ -117,10 +194,15 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
         hitsFile << ", " << std::setfill('0') << std::setw(2) << chipId;
         hitsFile << ", " << std::setfill('0') << std::setw(4) << row;
         hitsFile << ", " << std::setfill('0') << std::setw(4) << column;
-        hitsFile << ", " << std::setprecision(6) << hitX;
-        hitsFile << ", " << std::setprecision(6) << hitY;
-        hitsFile << ", " << std::setprecision(6) << hitZ;
+        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << hitX;
+        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << hitY;
+        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << hitZ;
+        hitsFile << ", " << std::setfill(' ') << std::setw(3) << trackType;
+        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxX;
+        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxY;
+        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxZ;
         hitsFile << "\n";
+std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< std::endl;
       }
     }
   }
@@ -132,8 +214,6 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int writeMVTXhits::End(PHCompositeNode *topNode)
 {
-  std::cout << "writeMVTXhits::End(PHCompositeNode *topNode) This is the End..." << std::endl;
-
   hitsFile.close();
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -142,12 +222,11 @@ int writeMVTXhits::End(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int writeMVTXhits::Reset(PHCompositeNode *topNode)
 {
- std::cout << "writeMVTXhits::Reset(PHCompositeNode *topNode) being Reset" << std::endl;
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
 //____________________________________________________________________________..
 void writeMVTXhits::Print(const std::string &what) const
 {
-  std::cout << "writeMVTXhits::Print(const std::string &what) const Printing info for " << what << std::endl;
+  std::cout << __FILE__ << "::" << __func__ << ": No print is impelented" << std::endl;
 }

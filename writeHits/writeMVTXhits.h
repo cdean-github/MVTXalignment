@@ -5,6 +5,9 @@
 
 #include <fun4all/SubsysReco.h>
 
+#include <g4eval/SvtxEvalStack.h>
+#include <g4eval/SvtxTrackEval.h>
+#include <g4eval/SvtxTruthEval.h>
 #include <mvtx/MvtxDefs.h>
 #include <phool/getClass.h>
 #include <trackbase/TrkrCluster.h>
@@ -12,6 +15,8 @@
 #include <trackbase/TrkrDefs.h>
 #include <trackbase_historic/SvtxTrackMap.h>
 #include <trackbase_historic/SvtxTrack.h>
+#include <trackbase_historic/SvtxVertexMap.h>
+#include <trackbase_historic/SvtxVertex.h>
 
 #include <fstream>
 #include <iomanip>
@@ -57,7 +62,12 @@ class writeMVTXhits : public SubsysReco
 
   std::ofstream hitsFile;
 
+  SvtxEvalStack *m_svtx_evalstack = nullptr;
+  SvtxTrackEval *trackeval = nullptr;
+  SvtxTruthEval *trutheval = nullptr;
+
   SvtxTrackMap *dst_trackmap = nullptr;
+  SvtxVertexMap *dst_vertexmap = nullptr;
   
   TrkrClusterContainer *dst_clustermap = nullptr;
   TrkrCluster *cluster = nullptr;
