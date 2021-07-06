@@ -38,7 +38,7 @@ R__LOAD_LIBRARY(libfun4all.so)
 // try inputFile = /sphenix/sim/sim01/sphnxpro/sHijing_HepMC/sHijing_0-12fm.dat
 
 int Fun4All_G4_sPHENIX(
-    const int nEvents = 5,
+    const int nEvents = 1e5,
     const string &inputFile = "https://www.phenix.bnl.gov/WWW/publish/phnxbld/sPHENIX/files/sPHENIX_G4Hits_sHijing_9-11fm_00000_00010.root",
     const string &outputFile = "G4sPHENIX.root",
     const string &embed_input_file = "https://www.phenix.bnl.gov/WWW/publish/phnxbld/sPHENIX/files/sPHENIX_G4Hits_sHijing_9-11fm_00000_00010.root",
@@ -75,7 +75,7 @@ int Fun4All_G4_sPHENIX(
   // read previously generated g4-hits files, in this case it opens a DST and skips
   // the simulations step completely. The G4Setup macro is only loaded to get information
   // about the number of layers used for the cell reco code
-  Input::READHITS = true;
+  //Input::READHITS = true;
   INPUTREADHITS::filename[0] = inputFile;
   // if you use a filelist
   // INPUTREADHITS::listfile[0] = inputFile;
@@ -90,7 +90,7 @@ int Fun4All_G4_sPHENIX(
   // if you use a filelist
   //INPUTEMBED::listfile[0] = embed_input_file;
 
-  //Input::SIMPLE = true;
+  Input::SIMPLE = true;
   // Input::SIMPLE_NUMBER = 2; // if you need 2 of them
   // Input::SIMPLE_VERBOSITY = 1;
 
@@ -258,20 +258,17 @@ int Fun4All_G4_sPHENIX(
   Enable::MVTX = true;
   Enable::MVTX_CELL = Enable::MVTX && true;
   Enable::MVTX_CLUSTER = Enable::MVTX_CELL && true;
-  Enable::MVTX_QA = Enable::MVTX_CLUSTER and Enable::QA && true;
 
   Enable::INTT = true;
   Enable::INTT_CELL = Enable::INTT && true;
   Enable::INTT_CLUSTER = Enable::INTT_CELL && true;
-  Enable::INTT_QA = Enable::INTT_CLUSTER and Enable::QA && true;
 
   Enable::TPC = true;
   Enable::TPC_ABSORBER = true;
   Enable::TPC_CELL = Enable::TPC && true;
   Enable::TPC_CLUSTER = Enable::TPC_CELL && true;
-  Enable::TPC_QA = Enable::TPC_CLUSTER and Enable::QA && true;
 
-  Enable::TRACKING_TRACK = false;
+  Enable::TRACKING_TRACK = true;
 
   Enable::CEMC = false;
   Enable::HCALIN = false;
@@ -296,7 +293,7 @@ int Fun4All_G4_sPHENIX(
 
   //  const string magfield = "1.5"; // alternatively to specify a constant magnetic field, give a float number, which will be translated to solenoidal field in T, if string use as fieldmap name (including path)
   //  G4MAGNET::magfield = string(getenv("CALIBRATIONROOT")) + string("/Field/Map/sPHENIX.2d.root");  // default map from the calibration database
-  G4MAGNET::magfield_rescale = -1.4 / 1.5;  // make consistent with expected Babar field strength of 1.4T
+  G4MAGNET::magfield_rescale = 0;//-1.4 / 1.5;  // make consistent with expected Babar field strength of 1.4T
 
   // Initialize the selected subsystems
   G4Init();
@@ -324,9 +321,9 @@ int Fun4All_G4_sPHENIX(
   // SVTX tracking
   //--------------
   if(Enable::TRACKING_TRACK)
-    {
-      TrackingInit();
-    }
+  {
+    TrackingInit();
+  }
   if (Enable::MVTX_CLUSTER) Mvtx_Clustering();
   if (Enable::INTT_CLUSTER) Intt_Clustering();
   if (Enable::TPC_CLUSTER) TPC_Clustering();
@@ -355,7 +352,7 @@ int Fun4All_G4_sPHENIX(
   }
 
    writeMVTXhits *myMVTXhits = new writeMVTXhits("myMVTXhits");
-   myMVTXhits->Verbosity(2);
+   myMVTXhits->Verbosity(0);
    se->registerSubsystem(myMVTXhits);
 
   //--------------

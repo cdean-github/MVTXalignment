@@ -28,17 +28,17 @@ int writeMVTXhits::Init(PHCompositeNode *topNode)
   hitsFile << "event num."
            << ", track num."
            << ", layer ID"
-           << ", staveID"
-           << ", chipID"
+           << ", stave ID"
+           << ", chip ID"
            << ", row"
            << ", column"
            << ", global_x"
            << ", global_y"
            << ", global_z"
            << ", trackType"
-           << ", vtxX"
-           << ", vtxY"
-           << ", vtxZ"
+           << ", vertex_x"
+           << ", vertex_y"
+           << ", vertex_z"
            << "\n";
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -85,105 +85,107 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
     std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< ": TRKR_CLUSTER does not exist" << std::endl;
   }
 
+  //std::unique_ptr<TrkrHitSetContainer> hitsetcontainer;
+TrkrHitSetContainer* hitsetcontainer = findNode::getClass<TrkrHitSetContainer>(topNode, "TRKR_HITSET");
+
   if (!m_svtx_evalstack)
   {
     m_svtx_evalstack = new SvtxEvalStack(topNode);
+    clustereval = m_svtx_evalstack->get_cluster_eval();
+    hiteval = m_svtx_evalstack->get_hit_eval();
     trackeval = m_svtx_evalstack->get_track_eval();
     trutheval = m_svtx_evalstack->get_truth_eval();
   }
 
   m_svtx_evalstack->next_event(topNode);
 
-  /*
-   * Iterate over the tracks
-   */
-  for (const auto& [key_track, track] : *dst_trackmap)
+  float vtxX = 0, vtxY = 0, vtxZ = 0;
+  unsigned int layerId = 0, staveId = 0, chipId = 0;
+  uint16_t row = 0, column = 0;
+  float hitX = 0, hitY = 0, hitZ = 0;
+  unsigned int trackNum = 0;
+  int trackType;
+
+  std::ostringstream position;
+
+  TrkrHitSetContainer::ConstRange hitset_range = hitsetcontainer->getHitSets(TrkrDefs::TrkrId::mvtxId);
+  for (TrkrHitSetContainer::ConstIterator hitset_iter = hitset_range.first;
+       hitset_iter != hitset_range.second;
+       ++hitset_iter)
   {
-    const unsigned int trackNum = key_track;
+    TrkrHitSet::ConstRange hit_range = hitset_iter->second->getHits();
 
-    /*
-     * Find the assoiciated vertex
-     */
-    float vtxX = 0, vtxY = 0, vtxZ = 0;
-
-    for (const auto& [key_vertex, vertex] : *dst_vertexmap)
+    for (TrkrHitSet::ConstIterator hit_iter = hit_range.first;
+         hit_iter != hit_range.second;
+         ++hit_iter)
     {
-      if (vertex->get_id() == track->get_vertex_id())
+      hitKey = hit_iter->first;
+      hit = hiteval->max_truth_hit_by_energy(hitKey);
+      particle = hiteval->max_truth_particle_by_energy(hitKey);
+      if (particle == nullptr) std::cout << "Particle is a null pointer!" << std::endl; 
+      vtx = trutheval->get_vertex(particle);
+      clusKey = clustereval->best_cluster_from(hit); 
+
+      trackNum = particle->get_track_id();
+      layerId = TrkrDefs::getLayer(clusKey);
+      staveId = MvtxDefs::getStaveId(clusKey);
+      chipId = MvtxDefs::getChipId(clusKey); 
+      row = MvtxDefs::getRow(hitKey);
+      column = MvtxDefs::getCol(hitKey);
+      hitX = hit->get_x(0);
+      hitY = hit->get_y(0);
+      hitZ = hit->get_z(0);
+      trackType = particle->get_primary_id();
+      vtxX = vtx->get_x();
+      vtxY = vtx->get_y();
+      vtxZ = vtx->get_z();
+
+      if (trackNum > 999) continue;
+
+      if (Verbosity() >= VERBOSITY_SOME)
       {
-        vtxX = vertex->get_x();
-        vtxY = vertex->get_y();
-        vtxZ = vertex->get_z();
+        if (Verbosity() >= VERBOSITY_MORE) particle->identify();
+
+        std::cout << "event_num: " << eventNum << std::endl;
+        std::cout << "track_num: " << trackNum << std::endl;
+        std::cout << "layer_ID: " << layerId << std::endl;
+        std::cout << "stave_ID: " << staveId << std::endl;
+        std::cout << "chip_ID: " << chipId << std::endl;
+        std::cout << "row: " << row << std::endl;
+        std::cout << "column: " << column << std::endl;
+        std::cout << "hitX: " << hitX << std::endl;
+        std::cout << "hitY: " << hitY << std::endl;
+        std::cout << "hitZ: " << hitZ << std::endl;
+        std::cout << "trackType: " << trackType << std::endl;
+        std::cout << "vtxX: " << vtxX << std::endl;
+        std::cout << "vtxY: " << vtxY << std::endl;
+        std::cout << "vtxZ: " << vtxZ << std::endl;
       }
-    }
-
-    int trackType;
-    PHG4Particle* truth_track = trackeval->max_truth_particle_by_nclusters(track);
-    if (truth_track == nullptr) trackType = -1;
-    else trackType = trutheval->is_primary(truth_track);
-    /*
-     * Now iterate over the clusters to get the hit locations
-     */ 
-    for (SvtxTrack::ConstClusterKeyIter iter = track->begin_cluster_keys();
-         iter != track->end_cluster_keys();
-         ++iter)
-    {
-      TrkrDefs::cluskey clusKey = *iter;
-      cluster = dst_clustermap->findCluster(clusKey);
-      const unsigned int trkrId = TrkrDefs::getTrkrId(clusKey);
-
-      unsigned int layerId = 0, staveId = 0, chipId = 0;
-      uint16_t row = 0, column = 0;
-      float hitX = 0, hitY = 0, hitZ = 0;
-      if (trkrId == TrkrDefs::mvtxId)
-      {
-        layerId = TrkrDefs::getLayer(clusKey);
-        staveId = MvtxDefs::getStaveId(clusKey);
-        chipId = MvtxDefs::getChipId(clusKey); 
-        row = MvtxDefs::getRow(clusKey);
-        column = MvtxDefs::getCol(clusKey);
-        hitX = cluster->getX();
-        hitY = cluster->getY();
-        hitZ = cluster->getZ();
-
-        if (Verbosity() >= VERBOSITY_SOME)
-        {
-          if (Verbosity() >= VERBOSITY_MORE) track->identify();
-
-          std::cout << "event_num: " << eventNum << std::endl;
-          std::cout << "track_num: " << trackNum << std::endl;
-          std::cout << "layer_ID: " << layerId << std::endl;
-          std::cout << "stave_ID: " << staveId << std::endl;
-          std::cout << "chip_ID: " << chipId << std::endl;
-          std::cout << "row: " << row << std::endl;
-          std::cout << "column: " << column << std::endl;
-          std::cout << "hitX: " << hitX << std::endl;
-          std::cout << "hitY: " << hitY << std::endl;
-          std::cout << "hitZ: " << hitZ << std::endl;
-          std::cout << "trackType: " << trackType << std::endl;
-          std::cout << "vtxX: " << vtxX << std::endl;
-          std::cout << "vtxY: " << vtxY << std::endl;
-          std::cout << "vtxZ: " << vtxZ << std::endl;
-        }
        
-        hitsFile << std::setfill('0') << std::setw(6) << eventNum;
-        hitsFile << ", " << std::setfill('0') << std::setw(3) << trackNum;
-        hitsFile << ", " << std::setfill('0') << std::setw(2) << layerId;
-        hitsFile << ", " << std::setfill('0') << std::setw(2) << staveId;
-        hitsFile << ", " << std::setfill('0') << std::setw(2) << chipId;
-        hitsFile << ", " << std::setfill('0') << std::setw(4) << row;
-        hitsFile << ", " << std::setfill('0') << std::setw(4) << column;
-        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << hitX;
-        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << hitY;
-        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << hitZ;
-        hitsFile << ", " << std::setfill(' ') << std::setw(3) << trackType;
-        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxX;
-        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxY;
-        hitsFile << ", "  << std::setfill(' ') << std::setw(8) << std::setprecision(6) << vtxZ;
-        hitsFile << "\n";
-      }
+      hitsFile << std::setfill('0') << std::setw(6) << eventNum;
+      hitsFile << ", " << std::setfill('0') << std::setw(3) << trackNum;
+      hitsFile << ", " << std::setfill('0') << std::setw(2) << layerId;
+      hitsFile << ", " << std::setfill('0') << std::setw(2) << staveId;
+      hitsFile << ", " << std::setfill('0') << std::setw(2) << chipId;
+      hitsFile << ", " << std::setfill('0') << std::setw(4) << row;
+      hitsFile << ", " << std::setfill('0') << std::setw(4) << column;
+      position << ", "  << std::setfill(' ') << std::setw(9) << hitX;
+      hitsFile << position.str(); position.str(""); position.clear();
+      position << ", "  << std::setfill(' ') << std::setw(9) << hitY;
+      hitsFile << position.str(); position.str(""); position.clear();
+      position << ", "  << std::setfill(' ') << std::setw(9) << hitZ;
+      hitsFile << position.str(); position.str(""); position.clear();
+      position << ", " << std::setfill(' ') << std::setw(3) << trackType;
+      hitsFile << position.str(); position.str(""); position.clear();
+      position << ", "  << std::setfill(' ') << std::setw(9) << vtxX;
+      hitsFile << position.str(); position.str(""); position.clear();
+      position << ", "  << std::setfill(' ') << std::setw(9) << vtxY;
+      hitsFile << position.str(); position.str(""); position.clear();
+      position << ", "  << std::setfill(' ') << std::setw(9) << vtxZ;
+      hitsFile << position.str(); position.str(""); position.clear();
+      hitsFile << "\n";
     }
   }
-
   eventNum++;
 
   return Fun4AllReturnCodes::EVENT_OK;
