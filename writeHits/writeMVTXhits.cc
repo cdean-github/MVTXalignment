@@ -105,6 +105,7 @@ TrkrHitSetContainer* hitsetcontainer = findNode::getClass<TrkrHitSetContainer>(t
   float hitX = 0, hitY = 0, hitZ = 0;
   unsigned int trackNum = 0;
   int trackType;
+  uint64_t previousCluster = 0;
 
   std::ostringstream position;
 
@@ -125,6 +126,9 @@ TrkrHitSetContainer* hitsetcontainer = findNode::getClass<TrkrHitSetContainer>(t
       if (particle == nullptr) std::cout << "Particle is a null pointer!" << std::endl; 
       vtx = trutheval->get_vertex(particle);
       clusKey = clustereval->best_cluster_from(hit); 
+
+      if (clusKey == previousCluster) continue;
+      else previousCluster = clusKey;
 
       trackNum = particle->get_track_id();
       layerId = TrkrDefs::getLayer(clusKey);
