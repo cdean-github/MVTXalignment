@@ -13,7 +13,7 @@
 #include <G4_Intt.C>
 #include <G4_Magnet.C>
 #include <G4_Micromegas.C>
-#include <G4_Mvtx.C>
+#include "G4_Mvtx.C"
 #include <G4_PSTOF.C>
 #include <G4_Pipe.C>
 #include <G4_PlugDoor.C>

@@ -52,7 +52,7 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
    * Check that the nodes we need were produced
    */   
   PHNodeIterator nodeIter(topNode);
-
+  /*
   PHNode *findNode = dynamic_cast<PHNode*>(nodeIter.findFirst("SvtxTrackMap"));
   if (findNode)
   {
@@ -74,8 +74,8 @@ int writeMVTXhits::process_event(PHCompositeNode *topNode)
   {
     std::cout << __FILE__ << "::" << __func__ << "::" << __LINE__<< ": SvtxVertexMap does not exist" << std::endl;
   }
-
-  findNode = dynamic_cast<PHNode*>(nodeIter.findFirst("TRKR_CLUSTER"));
+  */
+  PHNode *findNode = dynamic_cast<PHNode*>(nodeIter.findFirst("TRKR_CLUSTER"));
   if (findNode)
   {
     dst_clustermap = findNode::getClass<TrkrClusterContainer>(topNode, "TRKR_CLUSTER");

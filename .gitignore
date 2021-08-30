@@ -47,3 +47,5 @@ ltmain.sh
 *.job
 *.log
 missing
+
+install/
