@@ -82,6 +82,8 @@ namespace G4MVTXAlignment //Spefic stave tunings. Useage is layer, stave no., va
     {std::make_pair(2, 6), 90},
     {std::make_pair(2, 7), 30}
   };
+
+  double z_offset[] = {0.0, 0.0, 200.0};
 }
 
 void MvtxInit()
@@ -220,14 +222,13 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
   PHG4MvtxSubsystem* mvtx = new PHG4MvtxSubsystem("MVTX");
   mvtx->Verbosity(verbosity);
 
-  double z_offset[] = {0.0, 0.0, 200.0};
   int n_staves[] = {12, 16, 20};
 
   for (int ilayer = 0; ilayer < G4MVTX::n_maps_layer; ilayer++)
   {
     double radius_lyr = PHG4MvtxDefs::mvtxdat[ilayer][PHG4MvtxDefs::kRmd];
     //MVTX dealignment
-    mvtx->set_double_param(ilayer, "layer_z_offset", z_offset[ilayer]);
+    mvtx->set_double_param(ilayer, "layer_z_offset", G4MVTXAlignment::z_offset[ilayer]);
     for (int istave = 0; istave < n_staves[ilayer]; ++istave)
     {
       std::pair<int, int> thisStave{ilayer, istave};
