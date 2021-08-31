@@ -85,6 +85,12 @@ PHG4MvtxDetector::PHG4MvtxDetector(PHG4Subsystem* subsys, PHCompositeNode* Node,
     m_nominal_phitilt[ilayer] = params->get_double_param("phitilt");
     m_nominal_phi0[ilayer] = params->get_double_param("phi0");
     m_layer_z_offset[ilayer] = params->get_double_param("layer_z_offset");
+    
+    for (int iStave = 0; iStave < m_N_staves[ilayer]; ++iStave)
+    {
+      m_stave_z_offset[make_pair(ilayer, iStave)] = params->get_double_param("stave_" + to_string(iStave) + "_z_offset");
+      m_stave_z_tilt[make_pair(ilayer, iStave)] = params->get_double_param("stave_" + to_string(iStave) + "_z_tilt");
+    }
   }
   /*
   const PHParameters* alpide_params = m_ParamsContainer->GetParameters(PHG4MvtxDefs::ALPIDE_SEGMENTATION);
@@ -312,6 +318,19 @@ int PHG4MvtxDetector::ConstructMvtx_Layer(int layer, G4AssemblyVolume* av_ITSUSt
 
     Ta.setX(layer_nominal_radius * cos(phi_rotation));
     Ta.setY(layer_nominal_radius * sin(phi_rotation));
+
+    //Now add stave specific tilts and offsets
+    std::pair<int, int> thisStave{layer, iphi};
+    if (m_stave_z_tilt.find(thisStave)->second != 0.0)
+    {
+      double tiltAngle = m_stave_z_offset.find(thisStave)->second;
+      Ra.rotateX(cos(tiltAngle));
+      Ra.rotateY(sin(tiltAngle));
+    }
+    if (m_stave_z_offset.find(thisStave)->second != 0.0)
+    {
+      z_location = m_stave_z_offset.find(thisStave)->second;
+    }
     Ta.setZ(z_location);
 
     if (Verbosity() > 0)

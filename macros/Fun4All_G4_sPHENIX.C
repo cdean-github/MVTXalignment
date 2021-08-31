@@ -237,7 +237,7 @@ int Fun4All_G4_sPHENIX(
   DstOut::OutputFile = outputFile;
 
   // turn the display on (default off)
-  Enable::DISPLAY = false;
+  Enable::DISPLAY = true;
 
   //======================
   // What to run
@@ -259,16 +259,16 @@ int Fun4All_G4_sPHENIX(
   Enable::MVTX_CELL = Enable::MVTX && true;
   Enable::MVTX_CLUSTER = Enable::MVTX_CELL && true;
 
-  Enable::INTT = true;
+  Enable::INTT = false;
   Enable::INTT_CELL = Enable::INTT && true;
   Enable::INTT_CLUSTER = Enable::INTT_CELL && true;
 
-  Enable::TPC = true;
+  Enable::TPC = false;
   Enable::TPC_ABSORBER = false;
   Enable::TPC_CELL = Enable::TPC && true;
   Enable::TPC_CLUSTER = Enable::TPC_CELL && true;
 
-  Enable::TRACKING_TRACK = true;
+  Enable::TRACKING_TRACK = false;
 
   Enable::CEMC = false;
   Enable::HCALIN = false;

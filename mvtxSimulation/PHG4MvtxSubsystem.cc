@@ -213,6 +213,12 @@ void PHG4MvtxSubsystem::SetDefaultParameters()
 
     set_default_double_param(ilyr, "layer_z_offset", 0.0);
 
+    for (int iStave = 0; iStave <  mvtxdat[ilyr][kNStave]; ++iStave)
+    {
+      set_default_double_param(ilyr, "stave_" + to_string(iStave) + "_z_tilt", 0.0);
+      set_default_double_param(ilyr, "stave_" + to_string(iStave) + "_z_offset", 0.0);
+    }
+
   }
 
   set_default_string_param(GLOBAL, "stave_geometry_file", "ITS.gdml");  // default - almost nothing

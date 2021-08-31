@@ -81,6 +81,8 @@ class PHG4MvtxDetector : public PHG4Detector
   std::array<double, n_Layers> m_nominal_phitilt;
   std::array<double, n_Layers> m_nominal_phi0;
   std::array<double, n_Layers> m_layer_z_offset;
+  std::map<std::pair<int, int>, double> m_stave_z_offset;
+  std::map<std::pair<int, int>, double> m_stave_z_tilt;
 
   std::string m_Detector;
   std::string m_SuperDetector;

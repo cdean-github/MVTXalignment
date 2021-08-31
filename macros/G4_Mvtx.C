@@ -191,7 +191,7 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
   PHG4MvtxSubsystem* mvtx = new PHG4MvtxSubsystem("MVTX");
   mvtx->Verbosity(verbosity);
 
-  double z_offset[] = {0.0, 0.0, 10.0};
+  double z_offset[] = {0.0, 0.0, 000.0};
 
   for (int ilayer = 0; ilayer < G4MVTX::n_maps_layer; ilayer++)
   {
@@ -206,6 +206,8 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
   }
   mvtx->set_string_param(PHG4MvtxDefs::GLOBAL, "stave_geometry_file", string(getenv("CALIBRATIONROOT")) + string("/Tracking/geometry/mvtx_stave_v1.gdml"));
 
+  mvtx->set_double_param(0, "stave_1_z_offset", -500);
+  mvtx->set_double_param(1, "stave_2_z_tilt", 40);
 
   mvtx->SetActive();
   mvtx->OverlapCheck(maps_overlapcheck);
