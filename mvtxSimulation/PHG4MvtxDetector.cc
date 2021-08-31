@@ -278,7 +278,6 @@ int PHG4MvtxDetector::ConstructMvtx_Layer(int layer, G4AssemblyVolume* av_ITSUSt
   }
 
   G4double phistep = get_phistep(layer);  // this produces even stave spacing
-  double z_location = m_layer_z_offset[layer];
 
   if (Verbosity() > 0)
   {
@@ -320,6 +319,7 @@ int PHG4MvtxDetector::ConstructMvtx_Layer(int layer, G4AssemblyVolume* av_ITSUSt
 
     Ta.setX(layer_nominal_radius * cos(phi_rotation));
     Ta.setY(layer_nominal_radius * sin(phi_rotation));
+    double z_location = m_layer_z_offset[layer];
 
     //Now add stave specific tilts and offsets
     std::pair<int, int> thisStave{layer, iphi};
@@ -334,6 +334,7 @@ int PHG4MvtxDetector::ConstructMvtx_Layer(int layer, G4AssemblyVolume* av_ITSUSt
       z_location = m_stave_z_offset.find(thisStave)->second;
     }
     Ta.setZ(z_location);
+    z_location = 0.0;
 
     if (Verbosity() > 0)
     {
