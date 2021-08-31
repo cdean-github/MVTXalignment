@@ -191,7 +191,7 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
   PHG4MvtxSubsystem* mvtx = new PHG4MvtxSubsystem("MVTX");
   mvtx->Verbosity(verbosity);
 
-  double z_offset[] = {0.0, 0.0, 000.0};
+  double z_offset[] = {0.0, 0.0, 200.0};
 
   for (int ilayer = 0; ilayer < G4MVTX::n_maps_layer; ilayer++)
   {
@@ -206,8 +206,23 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
   }
   mvtx->set_string_param(PHG4MvtxDefs::GLOBAL, "stave_geometry_file", string(getenv("CALIBRATIONROOT")) + string("/Tracking/geometry/mvtx_stave_v1.gdml"));
 
-  mvtx->set_double_param(0, "stave_1_z_offset", -500);
-  mvtx->set_double_param(1, "stave_2_z_tilt", 40);
+  mvtx->set_double_param(0, "stave_1_z_offset", -0);
+  mvtx->set_double_param(0, "stave_2_z_offset", -50);
+  mvtx->set_double_param(0, "stave_3_z_offset", -100);
+  mvtx->set_double_param(0, "stave_4_z_offset", -150);
+  mvtx->set_double_param(0, "stave_5_z_offset", -200);
+  mvtx->set_double_param(0, "stave_6_z_offset", -250);
+  mvtx->set_double_param(0, "stave_7_z_offset", 50);
+  mvtx->set_double_param(0, "stave_8_z_offset", 10);
+  mvtx->set_double_param(0, "stave_9_z_offset", 150);
+  mvtx->set_double_param(0, "stave_10_z_offset", 200);
+  mvtx->set_double_param(0, "stave_11_z_offset", 2050);
+  mvtx->set_double_param(1, "stave_1_z_tilt", 10/57.295779513);
+  mvtx->set_double_param(1, "stave_2_z_tilt", 20/57.295779513);
+  mvtx->set_double_param(1, "stave_3_z_tilt", 30/57.295779513);
+  mvtx->set_double_param(1, "stave_4_z_tilt", 40/57.295779513);
+  mvtx->set_double_param(1, "stave_5_z_tilt", 50/57.295779513);
+  mvtx->set_double_param(1, "stave_6_z_tilt", 60/57.295779513);
 
   mvtx->SetActive();
   mvtx->OverlapCheck(maps_overlapcheck);
