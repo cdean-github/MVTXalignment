@@ -45,6 +45,8 @@ int Fun4All_G4_sPHENIX(
     const int skip = 0,
     const string &outdir = ".")
 {
+  bool runDisplay = true;
+
   FROG *fr = new FROG();
 
   Fun4AllServer *se = Fun4AllServer::instance();
@@ -237,7 +239,7 @@ int Fun4All_G4_sPHENIX(
   DstOut::OutputFile = outputFile;
 
   // turn the display on (default off)
-  Enable::DISPLAY = true;
+  Enable::DISPLAY = runDisplay ? true : false;
 
   //======================
   // What to run
@@ -251,24 +253,25 @@ int Fun4All_G4_sPHENIX(
   // Enable::BBC = true;
   Enable::BBCFAKE = true;  // Smeared vtx and t0, use if you don't want real BBC in simulation
 
-  Enable::PIPE = true;
+  Enable::PIPE = runDisplay ? false : true;
   Enable::PIPE_ABSORBER = true;
 
   // central tracking
   Enable::MVTX = true;
   Enable::MVTX_CELL = Enable::MVTX && true;
   Enable::MVTX_CLUSTER = Enable::MVTX_CELL && true;
+  Enable::MVTX_SERVICE = Enable::MVTX && runDisplay ? false : true;
 
-  Enable::INTT = false;
+  Enable::INTT = runDisplay ? false : true;
   Enable::INTT_CELL = Enable::INTT && true;
   Enable::INTT_CLUSTER = Enable::INTT_CELL && true;
 
-  Enable::TPC = false;
+  Enable::TPC = runDisplay ? false : true;
   Enable::TPC_ABSORBER = false;
   Enable::TPC_CELL = Enable::TPC && true;
   Enable::TPC_CLUSTER = Enable::TPC_CELL && true;
 
-  Enable::TRACKING_TRACK = false;
+  Enable::TRACKING_TRACK = runDisplay ? false : true;
 
   Enable::CEMC = false;
   Enable::HCALIN = false;
