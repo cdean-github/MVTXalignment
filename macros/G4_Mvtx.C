@@ -55,6 +55,35 @@ namespace G4MVTX
   double service_barrel_length = 150;    // [cm] length of service barrel ~(to patch panel)
 }  // namespace G4MVTX
 
+namespace G4MVTXAlignment //Spefic stave tunings. Useage is layer, stave no., value
+{
+  std::map<std::pair<int, int>, double> stave_tilt = 
+  {
+    {std::make_pair(0, 0), -10},
+    {std::make_pair(0, 2), 170},
+    {std::make_pair(1, 3), -110},
+    {std::make_pair(1, 2), -110},
+    {std::make_pair(1, 0), -110},
+    {std::make_pair(2, 0), 30},
+    {std::make_pair(2, 1), 60},
+    {std::make_pair(2, 3), 90},
+    {std::make_pair(2, 4), 30}
+  };
+
+  std::map<std::pair<int, int>, double> stave_z_position = 
+  {
+    {std::make_pair(0, 1), -10},
+    {std::make_pair(0, 6), 200},
+    {std::make_pair(1, 9), -110},
+    {std::make_pair(1, 2), -110},
+    {std::make_pair(1, 0), -110},
+    {std::make_pair(2, 1), 30},
+    {std::make_pair(2, 2), 60},
+    {std::make_pair(2, 6), 90},
+    {std::make_pair(2, 7), 30}
+  };
+}
+
 void MvtxInit()
 {
   //BlackHoleGeometry::max_radius = std::max(BlackHoleGeometry::max_radius, (PHG4MvtxDefs::mvtxdat[G4MVTX::n_maps_layer - 1][PHG4MvtxDefs::kRmd]) / 10. + G4MVTX::radius_offset);
@@ -192,12 +221,20 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
   mvtx->Verbosity(verbosity);
 
   double z_offset[] = {0.0, 0.0, 200.0};
+  int n_staves[] = {12, 16, 20};
 
   for (int ilayer = 0; ilayer < G4MVTX::n_maps_layer; ilayer++)
   {
     double radius_lyr = PHG4MvtxDefs::mvtxdat[ilayer][PHG4MvtxDefs::kRmd];
     //MVTX dealignment
     mvtx->set_double_param(ilayer, "layer_z_offset", z_offset[ilayer]);
+    for (int istave = 0; istave < n_staves[ilayer]; ++istave)
+    {
+      std::pair<int, int> thisStave{ilayer, istave};
+      mvtx->set_double_param(ilayer, "stave_" + std::to_string(istave) + "_z_offset", G4MVTXAlignment::stave_z_position.find(thisStave)->second);
+      mvtx->set_double_param(ilayer, "stave_" + std::to_string(istave) + "_z_tilt", G4MVTXAlignment::stave_tilt.find(thisStave)->second);
+    }
+
     if (verbosity)
     {
       cout << "Create Maps layer " << ilayer << " with radius " << radius_lyr << " mm." << endl;
@@ -205,24 +242,6 @@ double Mvtx(PHG4Reco* g4Reco, double radius,
     radius = radius_lyr / 10.;
   }
   mvtx->set_string_param(PHG4MvtxDefs::GLOBAL, "stave_geometry_file", string(getenv("CALIBRATIONROOT")) + string("/Tracking/geometry/mvtx_stave_v1.gdml"));
-
-  mvtx->set_double_param(0, "stave_1_z_offset", -0);
-  mvtx->set_double_param(0, "stave_2_z_offset", -50);
-  mvtx->set_double_param(0, "stave_3_z_offset", -100);
-  mvtx->set_double_param(0, "stave_4_z_offset", -150);
-  mvtx->set_double_param(0, "stave_5_z_offset", -200);
-  mvtx->set_double_param(0, "stave_6_z_offset", -250);
-  mvtx->set_double_param(0, "stave_7_z_offset", 50);
-  mvtx->set_double_param(0, "stave_8_z_offset", 10);
-  mvtx->set_double_param(0, "stave_9_z_offset", 150);
-  mvtx->set_double_param(0, "stave_10_z_offset", 200);
-  mvtx->set_double_param(0, "stave_11_z_offset", 2050);
-  mvtx->set_double_param(1, "stave_1_z_tilt", 10/57.295779513);
-  mvtx->set_double_param(1, "stave_2_z_tilt", 20/57.295779513);
-  mvtx->set_double_param(1, "stave_3_z_tilt", 30/57.295779513);
-  mvtx->set_double_param(1, "stave_4_z_tilt", 40/57.295779513);
-  mvtx->set_double_param(1, "stave_5_z_tilt", 50/57.295779513);
-  mvtx->set_double_param(1, "stave_6_z_tilt", 60/57.295779513);
 
   mvtx->SetActive();
   mvtx->OverlapCheck(maps_overlapcheck);
