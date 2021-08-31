@@ -313,6 +313,8 @@ int PHG4MvtxDetector::ConstructMvtx_Layer(int layer, G4AssemblyVolume* av_ITSUSt
     // It  is first rotated in phi by the azimuthal angle phi_rotation, plus the 90 degrees needed to point the face of the sensor  at the origin,  plus the tilt (if a tilt is appropriate)
 
     // note - if this is layer 0-2, phitilt is the additional tilt for clearance. Otherwise it is zero
+    Ra.rotateX(0);
+    Ra.rotateY(0);
     Ra.rotateZ(phi_rotation + phi_offset + phitilt);
     // Then translated as follows
 
